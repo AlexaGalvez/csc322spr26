@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create a Three.js scene with camera and renderer, displaying an 8-sided tower and a 4-sided pyramidion.</title>
+
+  <style>
+    
+  </style>
+
+  
+</head>
+<body>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+
+  <script>
+    const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeeeeee);
+
+const camera = new THREE.PerspectiveCamera(
+  45, 
+  window.innerWidth / window.innerHeight, 
+  1, 
+  2000
+);
+camera.position.set(0, 400, 600);
+camera.lookAt(0, 250, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+//where size is 
+const towerHeight = 500;
+const towerBase = 55;
+const towerTop = 34;
+const pyramidHeight = 55;
+
+const towerVertices = [
+  // Base 4 corners (x, y, z)
+  -towerBase/2, 0, -towerBase/2,
+   towerBase/2, 0, -towerBase/2,
+   towerBase/2, 0,  towerBase/2,
+  -towerBase/2, 0,  towerBase/2,
+  
+  // Top 4 corners
+  -towerTop/2, towerHeight, -towerTop/2,
+   towerTop/2, towerHeight, -towerTop/2,
+   towerTop/2, towerHeight,  towerTop/2,
+  -towerTop/2, towerHeight,  towerTop/2,
+  
+  0, towerHeight + pyramidHeight, 0
+];
+
+
+const towerIndices = [
+ 
+  0,1,5,  0,5,4,
+  1,2,6,  1,6,5,
+  2,3,7,  2,7,6,
+  3,0,4,  3,4,7,
+  
+  
+  4,5,8,
+  5,6,8,
+  6,7,8,
+  7,4,8
+];
+
+function buildGeometry(vertices, indices) {
+  const geometry = new THREE.BufferGeometry();
+  const positionArray = new Float32Array(indices.length * 3);
+  
+  for (let i = 0; i < indices.length; i++) {
+    const idx = indices[i];
+    positionArray[i*3]   = vertices[idx*3];
+    positionArray[i*3+1] = vertices[idx*3+1];
+    positionArray[i*3+2] = vertices[idx*3+2];
+  }
+  
+  geometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3));
+  geometry.computeVertexNormals();
+  return geometry;
+}
+//coloring 
+const materials = [
+  new THREE.MeshBasicMaterial({ color: 'gold', side: THREE.FrontSide }),          // keyword
+  new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.FrontSide }),       // hex
+  new THREE.MeshBasicMaterial({ color: 'rgb(95,83,181)', side: THREE.FrontSide }), // rgb
+  new THREE.MeshBasicMaterial({ color: 'navy', side: THREE.FrontSide }),       // keyword
+  new THREE.MeshBasicMaterial({ color: 'rgb(255,23,228)', side: THREE.FrontSide }), // rgb
+  new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.FrontSide }),       // hex
+  new THREE.MeshBasicMaterial({ color: 'cyan', side: THREE.FrontSide }),         // keyword
+  new THREE.MeshBasicMaterial({ color: 'magenta', side: THREE.FrontSide })       // CSS string
+];
+
+
+const monumentGroup = new THREE.Group();
+
+for (let i = 0; i < towerIndices.length; i += 3) {
+  const geom = new THREE.BufferGeometry();
+  const verticesTri = new Float32Array(9);
+  
+  for (let j = 0; j < 3; j++) {
+    const idx = towerIndices[i + j];
+    verticesTri[j*3]   = towerVertices[idx*3];
+    verticesTri[j*3+1] = towerVertices[idx*3+1];
+    verticesTri[j*3+2] = towerVertices[idx*3+2];
+  }
+  
+  geom.setAttribute('position', new THREE.BufferAttribute(verticesTri, 3));
+  geom.computeVertexNormals();
+  
+  const mat = materials[Math.floor(i/6) % materials.length]; // 2 triangles per side
+  const mesh = new THREE.Mesh(geom, mat);
+  monumentGroup.add(mesh);
+}
+
+scene.add(monumentGroup);
+
+
+function animate() {
+  requestAnimationFrame(animate);
+  monumentGroup.rotation.y += 0.01;
+  renderer.render(scene, camera);
+}
+
+animate();
+
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
+  </script>
+</body>
+</html>
